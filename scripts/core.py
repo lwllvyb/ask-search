@@ -30,14 +30,26 @@ def search(query, num=10, engines=None, lang=None, categories=None):
     if categories: params["categories"] = categories
 
     url = _search_url() + "?" + urllib.parse.urlencode(params)
-    # Use subprocess curl to avoid urllib HTTP/1.0 compatibility issues
+    # Use subprocess curl to avoid urllib HTTP/1.0 compatibility issues.
     result = subprocess.run(
-        ["curl", "-s", "--max-time", "15", url],
+        ["curl", "-s", "--max-time", "15", "-w", "\n%{http_code}", url],
         capture_output=True, text=True, timeout=20
     )
     if result.returncode != 0:
         raise RuntimeError(f"curl failed: {result.stderr[:200]}")
-    data = json.loads(result.stdout)
+
+    # `curl -w` appends the status code on the last line.
+    body, _, status = result.stdout.rpartition("\n")
+    if status != "200":
+        detail = body.strip().replace("\n", " ")[:200]
+        raise RuntimeError(f"SearxNG HTTP {status}: {detail}")
+
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError as e:
+        preview = body.strip().replace("\n", " ")[:200]
+        raise RuntimeError(f"Invalid JSON from SearxNG: {e.msg}. Body: {preview}")
+
     return data.get("results", [])[:num]
 
 def fmt_results(results, urls_only=False):
