@@ -19,6 +19,24 @@ import sys, json, urllib.parse, argparse, os, subprocess
 
 VERSION = "1.0.0"
 
+# --- Tavily support (opt-in via SEARCH_PROVIDER=tavily + TAVILY_API_KEY) ---
+
+def _get_search_provider():
+    return os.environ.get("SEARCH_PROVIDER", "searxng").lower()
+
+def tavily_search(query, num=10):
+    """Search via Tavily API. Requires tavily-python and TAVILY_API_KEY."""
+    try:
+        from tavily import TavilyClient
+    except ImportError:
+        raise RuntimeError("tavily-python not installed. Run: pip install tavily-python")
+    api_key = os.environ.get("TAVILY_API_KEY")
+    if not api_key:
+        raise RuntimeError("TAVILY_API_KEY env var is not set")
+    client = TavilyClient(api_key=api_key)
+    response = client.search(query=query, max_results=min(num, 20), search_depth="basic")
+    return response.get("results", [])
+
 def _search_url():
     base = os.environ.get("SEARXNG_URL", "http://localhost:8080")
     return base.rstrip("/") + "/search"
@@ -77,7 +95,11 @@ def main():
     args = p.parse_args()
 
     try:
-        results = search(args.query, args.num, args.engines, args.lang, args.categories)
+        provider = _get_search_provider()
+        if provider == "tavily":
+            results = tavily_search(args.query, args.num)
+        else:
+            results = search(args.query, args.num, args.engines, args.lang, args.categories)
     except Exception as e:
         print(json.dumps({"error": str(e)})); sys.exit(1)
 
