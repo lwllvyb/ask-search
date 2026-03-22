@@ -41,7 +41,7 @@ echo "✓ ask-search installed to $INSTALL_BIN/ask-search"
 if [ -n "${TAVILY_API_KEY:-}" ]; then
     echo ""
     echo "TAVILY_API_KEY detected — installing tavily-python ..."
-    pip install tavily-python && echo "✓ tavily-python installed" || echo "⚠ Failed to install tavily-python"
+    python3 -m pip install "tavily-python>=0.5.0" && echo "✓ tavily-python installed" || echo "⚠ Failed to install tavily-python"
 fi
 
 # Test

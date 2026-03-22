@@ -30,7 +30,10 @@ def tavily_search(query, num=10):
         from tavily import TavilyClient
     except ImportError:
         raise RuntimeError("tavily-python not installed. Run: pip install tavily-python")
-    client = TavilyClient()
+    api_key = os.environ.get("TAVILY_API_KEY")
+    if not api_key:
+        raise RuntimeError("TAVILY_API_KEY env var is not set")
+    client = TavilyClient(api_key=api_key)
     response = client.search(query=query, max_results=min(num, 20), search_depth="basic")
     return response.get("results", [])
 
@@ -92,7 +95,11 @@ def main():
     args = p.parse_args()
 
     try:
-        results = search(args.query, args.num, args.engines, args.lang, args.categories)
+        provider = _get_search_provider()
+        if provider == "tavily":
+            results = tavily_search(args.query, args.num)
+        else:
+            results = search(args.query, args.num, args.engines, args.lang, args.categories)
     except Exception as e:
         print(json.dumps({"error": str(e)})); sys.exit(1)
 

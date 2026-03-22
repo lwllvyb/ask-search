@@ -138,9 +138,17 @@ ask-search "query" -e google,brave    # specific engines
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SEARXNG_URL` | `http://localhost:8080` | SearxNG endpoint |
+| `SEARCH_PROVIDER` | `searxng` | Search backend: `searxng` or `tavily` |
+| `TAVILY_API_KEY` | *(none)* | Tavily API key (required when `SEARCH_PROVIDER=tavily`) — get one at [app.tavily.com](https://app.tavily.com) |
 
 ```bash
+# SearxNG (default)
 export SEARXNG_URL="http://localhost:8080"
+ask-search "query"
+
+# Tavily (opt-in)
+export SEARCH_PROVIDER=tavily
+export TAVILY_API_KEY=tvly-YOUR_API_KEY
 ask-search "query"
 ```
 
@@ -153,7 +161,8 @@ ask-search "query"
       "command": "python3",
       "args": ["/path/to/ask-search/mcp/server.py"],
       "env": {
-        "SEARXNG_URL": "http://localhost:8080"
+        "SEARXNG_URL": "http://localhost:8080",
+        "TAVILY_API_KEY": "tvly-YOUR_API_KEY"
       }
     }
   }
@@ -161,6 +170,11 @@ ask-search "query"
 ```
 
 Requires: `pip install mcp`
+
+MCP tools provided:
+- `web_search` — search via SearxNG
+- `web_search_news` — news search via SearxNG
+- `web_search_tavily` — search via Tavily API (requires `TAVILY_API_KEY`)
 
 ## 🦞 OpenClaw Skill
 
